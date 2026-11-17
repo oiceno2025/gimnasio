@@ -445,6 +445,53 @@ export const MOVES = {
   'lunge-bar': { dur: 3200, look: .9, arm: 'ik', elbow: [.6, -1, -.4], knee: { L: [0, -.3, 1], R: [0, 0, 1] }, props: { bar: 180, plates: 20, smith: true }, keys: [
     pose({ hip: [0, 58, -10], lean: 6, H: [36, 114, -15], F: [10, 9, -50], R: { F: [-10, 5, 26] } }),
     pose({ hip: [0, 84, -10], lean: 6, H: [36, 140, -15], F: [10, 9, -50], R: { F: [-10, 5, 26] } })] },
+  // ---------- calentar y soltar ----------
+  // Movilidad y estiramientos de los bloques Calentar y Soltar (`move` en cada paso de data/routines.js).
+  // Los de un lado se dibujan con el izquierdo; el muñeco se da la vuelta solo para el segundo lado.
+  'm-cat': { dur: 4200, tempo: [.4, .15], look: .45, yaw: 1.25, floor: 1.0, arm: 'ik', leg: 'fk', elbow: [.5, 0, -1], knee: [0, -1, 0], hot: ['lowback', 'abs'], props: { mat: true }, keys: [
+    pose({ ...QUAD, hip: [0, 45, -28], lean: 70, H: [20, 3, 24], hd: [0, .75, .66] }),
+    pose({ ...QUAD, hip: [0, 50, -28], lean: 78, H: [20, 3, 24], hd: [0, -.85, .5] })] },
+  'm-thoracic': { dur: 4200, tempo: [.4, .2], look: .5, yaw: .75, floor: 1.0, arm: { L: 'fk', R: 'ik' }, leg: 'fk', elbow: [.5, 0, -1], knee: [0, -1, 0], hot: ['back'], props: { mat: true }, keys: [
+    pose({ ...QUAD, lean: 74, ua: [.45, -.85, .25], fa: [-.69, .69, .22], R: { H: [-20, 3, 24] } }),
+    pose({ ...QUAD, hip: [-4, 47, -28], lean: 70, sx: [.8, .6, 0], px: [1, 0, 0], ua: [.85, .5, .15], fa: [-.83, -.48, .28], hd: [.3, .4, .87], R: { H: [-20, 3, 24] } })] },
+  'm-book': { dur: 5200, tempo: [.4, .2], look: .25, yaw: -1.35, floor: 1.0, leg: 'fk', knee: [-1, 0, 0], hot: ['chest', 'back'], props: { mat: true }, keys: [[[0, -1, 0], [-1, -.3, .1], [-1, -.2, 0], [0, .1, 1]], [[-.3, -.95, 0], [-.1, 1, .1], [0, 1, 0], [.15, .15, 1]], [[-.64, -.77, 0], [.9, .4, .1], [1, .1, .1], [.35, .2, .9]]].map(([sx, ua, fa, hd]) =>
+    pose({ hip: [0, 16, -9], lean: 88, sx, px: [0, -1, 0], ua: [-1, -.05, .1], fa: [-1, 0, 0], th: [-.72, 0, -.7], sh: [.75, 0, -.66], hd, R: { ua, fa, th: [-.72, .04, -.7], sh: [.75, 0, -.66] } })) },
+  'm-circles': { dur: 3000, loop: true, look: 1.05, hot: ['delts'], props: {}, keys: [0, 1, 2, 3, 4].map(i => { const a = i * Math.PI / 2, d = [.2, -Math.cos(a), Math.sin(a)]; return pose({ ua: d, fa: d }); }) },
+  'm-wall': { dur: 3600, look: 1.05, yaw: .7, hot: ['delts', 'back'], props: { boxes: [[120, 210, 6, 0, 105, -17]] }, keys: [
+    pose({ ua: [.85, -.5, -.05], fa: [.1, 1, 0] }),
+    pose({ ua: [.6, .8, -.05], fa: [-.1, 1, 0] })] },
+  'm-chin': { dur: 3600, tempo: [.35, .3], look: 1.48, dist: 2.9, yaw: 1.45, props: {}, keys: [pose({ ...HANG, hd: [0, .8, .6] }), pose({ ...HANG, hd: [0, 1, 0] })] },
+  'm-neck': { dur: 5200, tempo: [.5, 0], look: 1.48, dist: 2.9, yaw: .12, props: {}, keys: [pose({ ...HANG, hd: [.5, .87, 0] }), pose({ ...HANG, hd: [-.5, .87, 0] })] },
+  'm-hinge': { dur: 3400, look: .9, yaw: 1.2, hot: ['hams', 'glutes'], props: {}, keys: hingeKeys({ ua: [.02, -1, .02], fa: [0, -1, 0] }, { ua: [.1, -1, .06], fa: [0, -1, .1] }) },
+  'm-hips': { dur: 3600, loop: true, look: .95, arm: 'ik', elbow: [1, -.2, -.7], knee: [.3, 0, 1], hot: ['glutes'], props: {}, keys: [0, 1, 2, 3, 4].map(i => { const a = i * Math.PI / 2, x = 5 * Math.cos(a), z = 7 * Math.sin(a);
+    return pose({ hip: [x, 92, z], lean: -7 * Math.sin(a), F: [14, 5, 0], H: [x + 19, 102, z + 7], R: { F: [-14, 5, 0], H: [x - 19, 102, z + 7] } }); }) },
+  'm-band': { dur: 3000, look: 1.05, hot: ['back', 'delts'], props: { band: [{ a: 'LH', b: 'RH' }] }, keys: [
+    pose({ ua: [.25, -.05, 1], fa: [-.1, 0, 1] }),
+    pose({ ua: [1, -.05, .15], fa: [.95, 0, .3] })] },
+  // Estiramientos: se aguantan; el muñeco entra en la postura y la mantiene.
+  'm-trap': { dur: 6000, tempo: [.3, .5], look: 1.48, dist: 2.9, yaw: .12, arm: { L: 'ik', R: 'fk' }, elbow: [1, .5, -.6], props: {}, keys: [
+    pose({ hd: [.15, .98, .05], H: [-4, 170, 1], R: { ua: [-.15, -1, -.08], fa: [0, -1, .05] } }),
+    pose({ hd: [.5, .86, .1], H: [-1, 167, 1], R: { ua: [-.22, -1, -.05], fa: [-.15, -1, 0] } })] },
+  'm-levator': { dur: 6000, tempo: [.3, .5], look: 1.48, dist: 2.9, yaw: .5, arm: { L: 'ik', R: 'fk' }, elbow: [1, .5, -.4], props: {}, keys: [
+    pose({ hd: [.15, .95, .25], H: [1, 172, -2], R: { ua: [-.15, -1, -.08], fa: [0, -1, .05] } }),
+    pose({ hd: [.45, .6, .66], H: [3, 166, 3], R: { ua: [-.2, -1, -.1], fa: [-.1, -1, 0] } })] },
+  'm-pec': { dur: 6000, tempo: [.3, .5], look: 1.05, yaw: -.5, arm: { L: 'ik', R: 'fk' }, elbow: [1, -.3, -.3], hot: ['chest'], props: { boxes: [[8, 220, 8, 55, 110, 3]] }, keys: [
+    pose({ hip: [0, 93, -5], F: [11, 5, -14], H: [50, 171, 3], R: { F: [-11, 5, 20], ua: [-.15, -1, -.08], fa: [0, -1, .05] } }),
+    pose({ hip: [0, 93, 8], sx: [.95, 0, -.31], px: [1, 0, 0], F: [11, 5, -14], H: [50, 171, 3], R: { F: [-11, 5, 20], ua: [-.15, -1, -.08], fa: [0, -1, .05] } })] },
+  'm-child': { dur: 6000, tempo: [.3, .5], look: .3, yaw: 1.25, floor: 1.0, leg: 'fk', knee: [0, -1, 0], hot: ['back'], props: { mat: true }, keys: [
+    pose({ hip: [0, 30, -26], lean: 70, th: [.28, -.5, .82], sh: [-.1, .02, -1], ua: [.12, -.75, .65], fa: [0, -.7, .7], hd: [0, .1, 1] }),
+    pose({ hip: [0, 24, -30], lean: 85, th: [.28, -.36, .89], sh: [-.1, .02, -1], ua: [.12, -.5, .87], fa: [0, -.4, .92], hd: [0, -.35, .94] })] },
+  'm-hipflex': { dur: 6000, tempo: [.3, .5], look: .7, yaw: 1.2, floor: .9, arm: 'ik', leg: { L: 'fk', R: 'ik' }, elbow: [1, -.2, -.7], knee: { L: [0, -1, 0], R: [0, .2, 1] }, hot: ['quads'], props: { mat: true }, keys: [
+    pose({ hip: [0, 50, -4], th: [0, -.95, -.3], sh: [0, -.05, -1], H: [19, 60, 3], R: { F: [-11, 5, 40], H: [-19, 60, 3] } }),
+    pose({ hip: [0, 46, 8], lean: -5, th: [0, -.83, -.55], sh: [0, -.05, -1], H: [19, 56, 14], R: { F: [-11, 5, 40], H: [-19, 56, 14] } })] },
+  'm-ham': { dur: 6000, tempo: [.3, .5], look: .4, yaw: 1.3, floor: 1.0, arm: 'ik', leg: 'fk', elbow: [1, -.3, 0], knee: [0, 1, 0], hot: ['hams'], props: { mat: 25 }, keys: [
+    pose({ ...FLOOR, th: [0, 1, .1], sh: [0, .75, .65], H: [14, 34, 30], hd: [0, .12, -1], R: { th: [0, 0, 1], sh: [0, 0, 1], H: [4, 34, 30] } }),
+    pose({ ...FLOOR, th: [0, .9, -.45], sh: [0, .97, -.2], H: [14, 34, 14], hd: [0, .12, -1], R: { th: [0, 0, 1], sh: [0, 0, 1], H: [4, 34, 14] } })] },
+  'm-glute': { dur: 6000, tempo: [.3, .5], look: .4, yaw: 1.0, floor: 1.0, arm: 'ik', leg: { L: 'ik', R: 'fk' }, elbow: [1, -.3, 0], knee: { L: [1, .3, 0], R: [0, 1, 0] }, hot: ['glutes'], props: { mat: 25 }, keys: [
+    pose({ ...FLOOR, F: [-10, 49, 10], H: [-4, 37, 6], hd: [0, .12, -1], R: { th: [0, .9, -.4], sh: [0, .05, 1], H: [-15, 37, 8] } }),
+    pose({ ...FLOOR, F: [-10, 45, 3], H: [-4, 35, 0], hd: [0, .12, -1], R: { th: [0, .82, -.57], sh: [0, .05, 1], H: [-15, 35, 2] } })] },
+  'm-breath': { dur: 7000, tempo: [.45, .1], look: .3, yaw: 1.3, floor: 1.0, arm: 'ik', elbow: [1, .1, 0], knee: [0, 1, 0], props: { mat: 25 }, keys: [24, 27].map(y =>
+    pose({ ...FLOOR, F: [12, 5, 64], H: [7, y, 2], hd: [0, .12, -1] })) },
 };
 
 // Ejercicios que no se hacen en la postura de su familia, o que llevan un material distinto del habitual.

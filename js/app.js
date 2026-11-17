@@ -5,6 +5,7 @@ import { onRest, addRest, skipRest, keepAwake } from './timer.js';
 import { fmtClock } from './logic.js';
 import { esc, go, toast } from './ui/kit.js';
 import { setPaint } from './nav.js';
+import { SKIN } from './skin.js';
 
 const ROUTES = {
   hoy: () => import('./ui/hoy.js'), sesion: () => import('./ui/sesion.js'), ej: () => import('./ui/ejercicio.js'), pasos: () => import('./ui/pasos.js'),
@@ -26,7 +27,7 @@ async function render() {
   current?.unmount?.();
   current = v;
   root.className = v.bare ? 'bare' : '';
-  root.innerHTML = v.html + (v.tab ? `<nav class="tab" aria-label="Secciones">${TABS.map(([id, label]) => `<a href="#/${id}" class="${id === v.tab ? 'on' : ''}"${id === v.tab ? ' aria-current="page"' : ''}><span>${label}</span></a>`).join('')}</nav>` : '');
+  root.innerHTML = (v.tab && SKIN.brand ? `<div class="brand"><b>${SKIN.brand[0]}</b><span>${SKIN.brand[1]}</span></div>` : '') + v.html + (v.tab ? `<nav class="tab" aria-label="Secciones">${TABS.map(([id, label]) => `<a href="#/${id}" class="${id === v.tab ? 'on' : ''}"${id === v.tab ? ' aria-current="page"' : ''}><span>${label}</span></a>`).join('')}</nav>` : '');
   if (!v.keepScroll) scrollTo(0, 0);
   v.mount?.(root);
   keepAwake(!!openSession());

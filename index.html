@@ -9,6 +9,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gimnasio">
+<script>
+// Piel de la app: ?skin=dir (propuesta para el gimnasio) o ?skin=cartel (la original). Se recuerda en este navegador.
+(function () { var s = new URLSearchParams(location.search).get('skin'); try { if (s) localStorage.setItem('skin', s); s = s || localStorage.getItem('skin'); } catch (e) {}
+  if (s === 'dir') { document.documentElement.dataset.skin = 'dir'; document.querySelector('meta[name=theme-color]').content = '#FFFFFF'; document.title = 'DIR Entrena'; } })();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">

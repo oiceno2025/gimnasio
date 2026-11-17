@@ -7,14 +7,14 @@ import { esc, $, go, top, back } from './kit.js';
 import { refresh } from '../nav.js';
 
 const run = { key: null, i: 0, side: 1, endsAt: null, left: null };   // `left` (ms) cuando está en pausa
-let tick = null;
+let tick = null, man = null, shown = 0;
 
 function stepsFor(kind, s) {
   if (kind === 'neck') return NECK_ROUTINE;
   if (kind === 'cool') return COOLDOWN[s.kind] || COOLDOWN.full;
   const steps = [...(WARMUP[s.kind] || WARMUP.full)], first = s.items[0], kg = first && planFor(first, s).sets[0].kg;
   // Series de aproximación del primer ejercicio: 8 al 50 %, 5 al 70 %, 2–3 al 85 %.
-  if (kg >= 10) { const ex = S.ex[first.exerciseId], st = ex?.equip === 'mancuernas' ? 2 : 2.5; steps.push({ name: 'Series de aproximación', ramp: [[8, .5], [5, .7], [3, .85]].map(([r, f]) => `${r} <i class="x">×</i> ${fmtKg(roundTo(kg * f, st))} kg`), cue: `${ex.name}. Sin llegar a cansarte: es para entrar en calor.` }); }
+  if (kg >= 10) { const ex = S.ex[first.exerciseId], st = ex?.equip === 'mancuernas' ? 2 : 2.5; steps.push({ name: 'Series de aproximación', exerciseId: first.exerciseId, ramp: [[8, .5], [5, .7], [3, .85]].map(([r, f]) => `${r} <i class="x">×</i> ${fmtKg(roundTo(kg * f, st))} kg`), cue: `${ex.name}. Sin llegar a cansarte: es para entrar en calor.` }); }
   return steps;
 }
 
@@ -35,7 +35,8 @@ export function view(kind = 'warm') {
 
   const html = top(back(home, kind === 'neck' ? 'Hoy' : 'Sesión'), `${name} · ${run.i + 1} de ${steps.length}`) + `
     <div class="mins" aria-hidden="true">${steps.map((_, k) => `<i class="${k < run.i ? 'on' : k === run.i ? 'now' : ''}"></i>`).join('')}</div>
-    <h1 class="big">${esc(step.name)}</h1>
+    <div class="stage glow demo"><canvas aria-label="Muñeco haciendo ${esc(step.name)}"></canvas><h3>${esc(step.name)}</h3>
+      <div class="views"><button data-act="yaw" data-yaw="0">Frente</button><button data-act="yaw" data-yaw="1.5708">Lado</button><button data-act="yaw" data-yaw="3.1416">Detrás</button></div></div>
     <p class="lede">${esc(step.cue)}</p>
     ${step.ramp ? `<ul class="rows">${step.ramp.map((r, k) => `<li><p>Serie ${k + 1}</p><b>${r}</b></li>`).join('')}</ul><button class="cta" data-act="next">Hecho <i>a entrenar</i></button>` : `
     <div class="clock"><span class="d" id="clk" role="timer">${fmtClock(secsLeft())}</span><p><b>${step.sides ? `Lado ${run.side} de ${step.sides}` : `${step.secs} segundos`}</b>${step.sides ? 'Cambia de lado al pitido' : 'Sin prisa'}</p></div>
@@ -47,15 +48,18 @@ export function view(kind = 'warm') {
     bare: true, html,
     mount(root) {
       keepAwake(true);
+      const my = ++shown, cv = $('canvas', root), flip = !!step.sides && run.side === 2;       // el segundo lado, en espejo
+      import('../man.js').then(m => { if (my === shown) man = m.mountMan(cv, step.exerciseId ? { ex: S.ex[step.exerciseId] } : { move: step.move, flip }); }).catch(e => console.warn('Sin muñeco:', e));
       tick = setInterval(() => {
         if (!run.endsAt) return;
         const left = secsLeft(), el = $('#clk', root); if (el) el.textContent = fmtClock(left);
         if (left <= 0) { beep(2); advance(); }
       }, 200);
     },
-    unmount() { clearInterval(tick); if (run.endsAt && !location.hash.startsWith('#/pasos')) {   // al salir de la pantalla, pausa
+    unmount() { shown++; man?.destroy(); man = null; clearInterval(tick); if (run.endsAt && !location.hash.startsWith('#/pasos')) {   // al salir de la pantalla, pausa
       run.left = Math.max(0, run.endsAt - Date.now()); run.endsAt = null; } if (!openSession()) keepAwake(false); },
     actions: {
+      yaw(el) { man?.view(+el.dataset.yaw); el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); },
       toggle() { unlockSound(); if (run.endsAt) { run.left = Math.max(0, run.endsAt - Date.now()); run.endsAt = null; } else { run.endsAt = Date.now() + (run.left ?? step.secs * 1000); run.left = null; } refresh(); },
       next() { unlockSound(); advance(); },
       async skipall() { run.key = null; if (s && kind !== 'neck') await saveSession({ ...s, [kind]: 'skip' }); go(home); },

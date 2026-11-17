@@ -5,6 +5,9 @@
 //   · 'ik': la mano o el pie siguen una línea y el codo o la rodilla se calculan (barra guiada, pies en el suelo).
 import * as THREE from 'three';
 import { MOVES, moveFor, moveOf } from './data/moves.js';
+import { SKIN } from './skin.js';
+
+const C = SKIN.man;                                        // colores del muñeco según la piel
 
 const V = THREE.Vector3;
 export const LEN = { arm: [31, 28], leg: [44, 44], spine: 55, neck: 15.5 };
@@ -54,23 +57,25 @@ export function phase(ph, tempo = [.32, .10]) {
 }
 
 // `ex`: el ejercicio del catálogo (elige postura y material). Sin él, `move` es el nombre de una familia.
-export function mountMan(canvas, { ex = null, move = 'stand', hot = ex?.muscles ?? [], spin = false, yaw, k = null } = {}) {
+// `flip`: el muñeco en espejo, para el segundo lado de un estiramiento.
+export function mountMan(canvas, { ex = null, move = 'stand', hot = null, spin = false, yaw, k = null, flip = false } = {}) {
   const mv = ex ? moveOf(ex) : MOVES[moveFor(move)], cmv = v => v.clone().multiplyScalar(.01);
+  hot ??= ex?.muscles ?? mv.hot ?? [];
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(28, 1, .1, 50), rig = new THREE.Group(); scene.add(rig); rig.add(camera);
-  for (const [color, power, pos] of [[0xfff4ea, 2.4, [-2, 4, 5]], [0xffffff, .7, [3, 1, 4]], [0xff4a1c, 4, [-4, 2.5, -4]], [0xff7a45, 3, [4, 1.5, -3]]]) { const l = new THREE.DirectionalLight(color, power); l.position.set(...pos); rig.add(l); }
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x1a0a05, .6));
-  const R = mv.floor ?? .62, flat = (g, o) => { const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xff4a1c, transparent: true, opacity: o })); m.rotation.x = -Math.PI / 2; scene.add(m); return m; };
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(28, 1, .1, 50), rig = new THREE.Group(), world = new THREE.Group(); scene.add(rig, world); rig.add(camera); if (flip) world.scale.x = -1;
+  for (const [color, power, pos] of C.lights) { const l = new THREE.DirectionalLight(color, power); l.position.set(...pos); rig.add(l); }
+  scene.add(new THREE.HemisphereLight(...C.hemi));
+  const R = mv.floor ?? .62, flat = (g, o) => { const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: C.ring, transparent: true, opacity: o })); m.rotation.x = -Math.PI / 2; scene.add(m); return m; };
   flat(new THREE.RingGeometry(R, R + .02, 96), .8); flat(new THREE.CircleGeometry(R, 96), .12).position.y = -.001;
 
   const std = (color, roughness = .7) => new THREE.MeshStandardMaterial({ color, roughness, metalness: 0 });
-  const MAT = { skin: std(0xd8a27c, .6), top: std(0xf1efe8, .85), shorts: std(0x26262b, .9), hair: std(0x2b1d15, .9), shoe: std(0x2a2a2f, .7), sole: std(0xf1efe8, .6),
-    hot: new THREE.MeshStandardMaterial({ color: 0xff4a1c, emissive: 0xff3a0c, emissiveIntensity: .45, roughness: .55, side: THREE.DoubleSide }) };
-  const steel = new THREE.MeshStandardMaterial({ color: 0xf4f3ee, roughness: .35, metalness: .6 }), dark = std(0x232327, .7);
+  const MAT = { skin: std(C.skin, .6), top: std(C.top, .85), shorts: std(C.shorts, .9), hair: std(C.hair, .9), shoe: std(C.shoe, .7), sole: std(C.sole, .6),
+    hot: new THREE.MeshStandardMaterial({ color: C.hot, emissive: C.hotGlow[0], emissiveIntensity: C.hotGlow[1], roughness: .55, side: THREE.DoubleSide }) };
+  const steel = new THREE.MeshStandardMaterial({ color: C.steel, roughness: .35, metalness: .6 }), dark = std(C.dark, .7);
 
   // ----- cuerpo: piezas que van de un punto a otro; `key` es el músculo que las enciende -----
-  const man = new THREE.Group(), parts = [], mix = (a, b, t) => a.clone().lerp(b, t); scene.add(man);
+  const man = new THREE.Group(), parts = [], mix = (a, b, t) => a.clone().lerp(b, t); world.add(man);
   function limb(from, to, rA, rB, mat, { half, key, depth = 1, ref } = {}) {
     const th = half === 'front' ? [-Math.PI / 2, Math.PI] : half === 'back' ? [Math.PI / 2, Math.PI] : [0, Math.PI * 2];
     const m = new THREE.Mesh(new THREE.CylinderGeometry(rB * .01, rA * .01, 1, 28, 1, false, th[0], th[1]), mat);
@@ -141,8 +146,8 @@ export function mountMan(canvas, { ex = null, move = 'stand', hot = ex?.muscles 
 
   // ----- material: sale del ejercicio (barra, mancuernas, polea, máquina, kettlebell), no solo del movimiento -----
   // Todo son piezas simples hechas aquí mismo: no se descarga nada y no pesa.
-  const gear = new THREE.Group(); scene.add(gear);
-  const orange = new THREE.MeshStandardMaterial({ color: 0xff4a1c, roughness: .6 }), ropeMat = std(0xd9cfb8, .9), frame = std(0x3a3a40, .6), wire = std(0xa9a9b2, .5);
+  const gear = new THREE.Group(); world.add(gear);
+  const orange = new THREE.MeshStandardMaterial({ color: C.accent, roughness: .6 }), ropeMat = std(0xd9cfb8, .9), frame = std(C.frame, .6), wire = std(C.wire, .5);
   const cyl = (r, mat = steel, seg = 16) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, seg), mat); gear.add(m); return m; };
   const box = (w, h, d, mat = dark) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * .01, h * .01, d * .01), mat); gear.add(m); return m; };
   const between = (m, a, b) => { const d = b.clone().sub(a), len = d.length() || 1e-4; m.scale.set(1, len, 1); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(up, d.normalize()); };
@@ -165,7 +170,7 @@ export function mountMan(canvas, { ex = null, move = 'stand', hot = ex?.muscles 
   if (P.hipbar) { g.hipbar = cyl(.014); g.hplates = [cyl(.2, dark, 28), cyl(.2, dark, 28)]; }
   g.attach = (P.attach || []).map(a => ({ ...a, m: box(...a.box, a.metal ? frame : dark) }));
   g.band = (P.band || []).map(b => ({ ...b, m: cyl(.009, orange, 8) }));
-  if (P.mat) { const m = box(66, 1.2, 190, std(0x1c1c20, .95)); m.position.set(0, .006, P.mat === true ? 0 : P.mat * .01); }
+  if (P.mat) { const m = box(66, 1.2, 190, std(C.mat, .95)); m.position.set(0, .006, P.mat === true ? 0 : P.mat * .01); }
   for (const [w, h, d, x, y, z, rx] of P.boxes || []) { const m = box(w, h, d, h > 100 || w < 9 ? frame : dark); m.position.set(x * .01, y * .01, z * .01); if (rx) m.rotation.x = rx; }
   function place({ J, spine, fwd }) {
     const mid = J.LH.clone().add(J.RH).multiplyScalar(.5), at = n => (n === 'M' ? mid : n === 'hip' || n === 'neck' || n === 'head' ? J[n] : n === 'shoulders' ? J.LS.clone().add(J.RS).multiplyScalar(.5) : n === 'feet' ? J.LF.clone().add(J.RF).multiplyScalar(.5) : n === 'knees' ? J.LK.clone().add(J.RK).multiplyScalar(.5) : J[n]);

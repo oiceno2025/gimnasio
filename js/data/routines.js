@@ -88,21 +88,22 @@ export const TEMPLATES = [
 ];
 
 // ---------- Calentar y Soltar ----------
-// Paso: { name, secs, cue, sides? }. `sides: 2` = por lado (el cronómetro corre dos veces).
-const st = (name, secs, cue, sides) => ({ name, secs, cue, ...(sides ? { sides } : {}) });
-const CARDIO = st('Cardio suave', 240, 'Elíptica o cinta llana. Que puedas hablar sin ahogarte.');
-const CAT = st('Gato-camello', 40, 'A cuatro patas. Redondea y arquea la espalda despacio.');
-const THOR = st('Rotación torácica', 30, 'A cuatro patas, mano en la nuca. Abre el codo al techo.', 2);
-const BOOK = st('Libro abierto', 30, 'Tumbado de lado, rodillas juntas. Abre el brazo de arriba.', 2);
-const CIRC = st('Círculos de hombro', 30, 'Grandes y lentos. Hacia delante y hacia atrás.');
-const WALL = st('Deslizamientos en pared', 40, 'Espalda y codos pegados a la pared. Sube y baja los brazos.');
-const CHIN = st('Retracción de mentón', 30, 'Mete la barbilla hacia atrás, sin bajar la cabeza. Papada.');
-const NECK = st('Inclinaciones de cuello', 30, 'Oreja al hombro, suave. Sin forzar.', 2);
-const HINGE = st('Bisagra de cadera sin peso', 40, 'Culo atrás, espalda larga, rodillas apenas dobladas.');
-const HIPS = st('Círculos de cadera', 30, 'De pie, manos en la cintura. Amplios y lentos.');
-const BAND = st('Separar banda', 40, 'O face pull muy ligero. 15 repeticiones, hombros abajo.');
-const DOG = st('Bird dog', 40, 'Brazo y pierna contraria. Sin girar la cadera.');
-const BRIDGE = st('Puente de glúteo', 40, 'Sube la cadera apretando el glúteo. 12 repeticiones.');
+// Paso: { name, secs, cue, move, sides? }. `sides: 2` = por lado (el cronómetro corre dos veces).
+// `move`: la postura del muñeco (data/moves.js). Todos los pasos llevan la suya.
+const st = (name, secs, cue, move, sides) => ({ name, secs, cue, move, ...(sides ? { sides } : {}) });
+const CARDIO = st('Cardio suave', 240, 'Elíptica o cinta llana. Que puedas hablar sin ahogarte.', 'elliptical');
+const CAT = st('Gato-camello', 40, 'A cuatro patas. Redondea y arquea la espalda despacio.', 'm-cat');
+const THOR = st('Rotación torácica', 30, 'A cuatro patas, mano en la nuca. Abre el codo al techo.', 'm-thoracic', 2);
+const BOOK = st('Libro abierto', 30, 'Tumbado de lado, rodillas juntas. Abre el brazo de arriba.', 'm-book', 2);
+const CIRC = st('Círculos de hombro', 30, 'Grandes y lentos. Hacia delante y hacia atrás.', 'm-circles');
+const WALL = st('Deslizamientos en pared', 40, 'Espalda y codos pegados a la pared. Sube y baja los brazos.', 'm-wall');
+const CHIN = st('Retracción de mentón', 30, 'Mete la barbilla hacia atrás, sin bajar la cabeza. Papada.', 'm-chin');
+const NECK = st('Inclinaciones de cuello', 30, 'Oreja al hombro, suave. Sin forzar.', 'm-neck', 2);
+const HINGE = st('Bisagra de cadera sin peso', 40, 'Culo atrás, espalda larga, rodillas apenas dobladas.', 'm-hinge');
+const HIPS = st('Círculos de cadera', 30, 'De pie, manos en la cintura. Amplios y lentos.', 'm-hips');
+const BAND = st('Separar banda', 40, 'O face pull muy ligero. 15 repeticiones, hombros abajo.', 'm-band');
+const DOG = st('Bird dog', 40, 'Brazo y pierna contraria. Sin girar la cadera.', 'bird-dog');
+const BRIDGE = st('Puente de glúteo', 40, 'Sube la cadera apretando el glúteo. 12 repeticiones.', 'glute-bridge');
 
 export const WARMUP = {
   pull: [CARDIO, CAT, THOR, BOOK, CIRC, WALL, CHIN, NECK, BAND, DOG],
@@ -113,14 +114,14 @@ export const WARMUP = {
   easy: [CARDIO, CAT, HIPS, HINGE, CHIN, NECK],
 };
 
-const TRAP = st('Trapecio superior', 35, 'Oreja al hombro; la otra mano tira suave hacia el suelo.', 2);
-const LEV = st('Elevador de la escápula', 35, 'Mira hacia tu axila y baja la cabeza con la mano.', 2);
-const PEC = st('Pectoral en marco', 35, 'Antebrazo en el marco de una puerta. Gira el cuerpo hacia fuera.', 2);
-const LAT = st('Dorsal: postura del niño', 45, 'De rodillas, culo a los talones, brazos largos al frente.');
-const HIPF = st('Flexor de cadera', 35, 'Zancada con la rodilla de atrás en el suelo. Cadera adelante.', 2);
-const HAM = st('Isquios', 35, 'Tumbado, pierna arriba cogida por detrás del muslo.', 2);
-const GLU = st('Glúteo', 35, 'Tumbado, tobillo sobre la rodilla contraria. Tira hacia ti.', 2);
-const BREATH = st('Respiración lenta', 120, 'Por la nariz. Mandíbula suelta, dientes separados.');
+const TRAP = st('Trapecio superior', 35, 'Oreja al hombro; la otra mano tira suave hacia el suelo.', 'm-trap', 2);
+const LEV = st('Elevador de la escápula', 35, 'Mira hacia tu axila y baja la cabeza con la mano.', 'm-levator', 2);
+const PEC = st('Pectoral en marco', 35, 'Antebrazo en el marco de una puerta. Gira el cuerpo hacia fuera.', 'm-pec', 2);
+const LAT = st('Dorsal: postura del niño', 45, 'De rodillas, culo a los talones, brazos largos al frente.', 'm-child');
+const HIPF = st('Flexor de cadera', 35, 'Zancada con la rodilla de atrás en el suelo. Cadera adelante.', 'm-hipflex', 2);
+const HAM = st('Isquios', 35, 'Tumbado, pierna arriba cogida por detrás del muslo.', 'm-ham', 2);
+const GLU = st('Glúteo', 35, 'Tumbado, tobillo sobre la rodilla contraria. Tira hacia ti.', 'm-glute', 2);
+const BREATH = st('Respiración lenta', 120, 'Por la nariz. Mandíbula suelta, dientes separados.', 'm-breath');
 
 export const COOLDOWN = {
   pull: [TRAP, LEV, PEC, LAT, HIPF, HAM, BREATH],
@@ -132,7 +133,7 @@ export const COOLDOWN = {
 };
 
 // Rutina corta para cualquier día, también en casa.
-export const NECK_ROUTINE = [CHIN, NECK, TRAP, LEV, CIRC, WALL, st('Respiración lenta', 60, 'Por la nariz. Mandíbula suelta, lengua al paladar.')];
+export const NECK_ROUTINE = [CHIN, NECK, TRAP, LEV, CIRC, WALL, st('Respiración lenta', 60, 'Por la nariz. Mandíbula suelta, lengua al paladar.', 'm-breath')];
 
 export const blockMinutes = steps => Math.round(steps.reduce((t, s) => t + s.secs * (s.sides || 1), 0) / 60);
 

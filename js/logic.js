@@ -137,6 +137,28 @@ export function fillBaseline(baseline, sets) {
     return { ...b, kg: first.kg, reps: first.reps, auto: first.date };
   });
 }
+// ---------- progreso en el tiempo ----------
+// Mejor serie de cada día en un ejercicio, de la más antigua a la más reciente: [{ date, v }].
+// `v` es la fuerza máxima estimada; en los ejercicios sin peso, las repeticiones.
+export function exerciseSeries(sets, exerciseId, f = s => (s.kg > 0 ? epley(s.kg, s.reps) : s.reps)) {
+  const by = new Map();
+  for (const s of sets) if (s.exerciseId === exerciseId && work(s)) by.set(s.date, Math.max(by.get(s.date) ?? 0, f(s)));
+  return [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([date, v]) => ({ date, v }));
+}
+// Fuerza frente al punto de partida, día a día: en cada fecha, la media del cambio (%) de los ejercicios
+// con marca inicial, tomando de cada uno su última sesión hasta ese día. El último punto es el de `strengthChange`.
+export function strengthSeries(baseline, sets) {
+  const lines = (baseline || []).filter(b => b.kg > 0 && b.reps > 0)
+    .map(b => ({ start: epley(b.kg, b.reps), pts: exerciseSeries(sets, b.exerciseId, s => epley(s.kg, s.reps)) })).filter(l => l.pts.length);
+  const dates = [...new Set(lines.flatMap(l => l.pts.map(p => p.date)))].sort();
+  return dates.map(date => {
+    const r = lines.map(l => { const p = l.pts.filter(x => x.date <= date).at(-1); return p ? (p.v / l.start - 1) * 100 : null; }).filter(v => v != null);
+    return { date, v: r.reduce((t, x) => t + x, 0) / r.length };
+  });
+}
+// Sin marcas iniciales apuntadas, el punto de partida de cada ejercicio con peso es su primera sesión.
+export const autoBaseline = sets => fillBaseline([...new Set(sets.filter(s => s.kg > 0 && work(s)).map(s => s.exerciseId))].map(exerciseId => ({ exerciseId })), sets);
+
 export function attendance(sessions, routine, from, to = ymd()) {
   const done = new Set(sessions.filter(s => s.endedAt).map(s => s.date)); let possible = 0, made = 0;
   for (let d = parseYmd(from); ymd(d) <= to; d = addDays(d, 1)) if (dayOf(routine, dow(d))) { possible++; if (done.has(ymd(d))) made++; }
