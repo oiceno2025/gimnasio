@@ -1,5 +1,5 @@
 // Fin de sesión: resumen, récords, molestia de cuello y espalda, y confirmación de la copia.
-import { S, openSession, saveSession, setsOf, setting } from '../state.js';
+import { S, openSession, saveSession, setsOf, setting, lastCopy } from '../state.js';
 import { RECORD_TEXT, fmtKg } from '../logic.js';
 import { skipRest, keepAwake } from '../timer.js';
 import { esc, $, go, top, back, scale } from './kit.js';
@@ -11,7 +11,7 @@ export function view() {
   if (saved) {
     const days = saved.lastShare ? Math.floor((Date.now() - saved.lastShare) / 864e5) : null, due = days == null || days >= 7;
     return { bare: true, html: `<h1 class="big" style="padding-top:60px">Sesión<br><em>guardada</em></h1>
-      <p class="lede">Guardada en este móvil.${saved.sheet ? ' Tu hoja de Google se actualiza sola.' : ''}${due ? (days == null ? ' Aún no tienes ninguna copia fuera del móvil.' : ` Llevas ${days} días sin guardar una copia fuera del móvil.`) : ''}</p>
+      <p class="lede">Guardada en este móvil.${saved.sheet ? ' Tu hoja de Google y su copia se actualizan solas.' : ''}${due ? (days == null ? ' Aún no tienes ninguna copia fuera del móvil.' : ` Llevas ${days} días sin guardar una copia fuera del móvil.`) : ''}</p>
       <button class="cta" data-act="home">Listo</button>${due ? '<div class="linkrow"><button class="link" data-act="tu">Guardar una copia ahora</button></div>' : ''}`,
       actions: { home() { saved = null; go('#/hoy'); }, tu() { saved = null; go('#/tu'); } } };
   }
@@ -38,7 +38,7 @@ export function view() {
         draft.note = $('#snote').value.trim();
         await saveSession({ ...s, neck: draft.neck, back: draft.back, note: draft.note, endedAt: Date.now() });
         draft = null; skipRest(); keepAwake(false);
-        saved = { lastShare: setting('lastShare'), sheet: !!setting('sheet')?.mode };
+        saved = { lastShare: lastCopy(), sheet: !!setting('sheet')?.mode };
         import('../sheets.js').then(m => m.queueSheet());       // la hoja de Google, si está conectada; no frena el cierre
         refresh();
       },

@@ -3,7 +3,7 @@ import { S, openSession, setsOf, planFor, saveSession, addSet, fixSet, setting, 
 import { restFor, recordsBroken, RECORD_TEXT, WHY_TEXT, fmtKg, niceDate } from '../logic.js';
 import { JAW_CUE, WEAK_SIDE_CUE } from '../data/routines.js';
 import { startRest, unlockSound } from '../timer.js';
-import { esc, $, num, go, top, back, toast, sheet, pickRows } from './kit.js';
+import { esc, $, num, go, top, back, toast, sheet, pickRows, fit } from './kit.js';
 import { refresh } from '../nav.js';
 import { itemLine } from './hoy.js';
 
@@ -31,9 +31,9 @@ export function view(kStr) {
   const note = setting('note:' + ex.id, '');
 
   const html = top(back('#/sesion', s.title.join(' ')), `${k + 1} de ${s.items.length}`) + `
-    <div class="stage glow"><canvas aria-label="Muñeco haciendo ${esc(ex.name)}"></canvas><h3>${esc(ex.name)}<span>${itemLine(item)}</span></h3>
-      <div class="views"><button data-act="yaw" data-yaw="0">Frente</button><button data-act="yaw" data-yaw="1.5708">Lado</button><button data-act="yaw" data-yaw="3.1416">Detrás</button></div><small>Arrastra para girar</small></div>
-    <ul class="tips">${tips}</ul>
+    <div class="stage glow ${done.length ? 'mini' : ''}"><canvas aria-label="Muñeco haciendo ${esc(ex.name)}"></canvas><h3 ${fit(ex.name, 150, done.length ? 26 : 36)}>${esc(ex.name)}<span>${itemLine(item)}</span></h3>
+      <div class="views"><button data-act="yaw" data-yaw="0">Frente</button><button data-act="yaw" data-yaw="1.5708">Lado</button><button data-act="yaw" data-yaw="3.1416">Detrás</button>${done.length ? '' : '<small>Arrastra para girar</small>'}</div></div>
+    ${done.length ? `<details class="fold"><summary>Claves del ejercicio</summary><ul class="tips">${tips}</ul></details>` : `<ul class="tips">${tips}</ul>`}
     ${!done.length && WHY_TEXT[plan.why] ? `<p class="why">${WHY_TEXT[plan.why]}</p>` : ''}
     ${plan.last.length ? `<p class="note">Última vez, ${niceDate(plan.last[0].date)}: ${plan.last.map(x => `${x.kg > 0 ? fmtKg(x.kg) + '×' : ''}${x.reps}`).join(' · ')}</p>` : ''}
     <ol class="sets">${Array.from({ length: rows }, (_, i) => line(i)).join('')}</ol>
@@ -44,7 +44,8 @@ export function view(kStr) {
 
   const commit = async input => {
     if (!editing) return; const { i, f } = editing, v = num(input.value); editing = null;
-    if (v != null && v >= 0) {
+    if (v != null && v > (f === 'kg' ? 600 : 999)) toast('Ese número no parece correcto');
+    else if (v != null && v >= 0) {
       if (done[i]) await fixSet(done[i].id, { [f]: v });
       else { const vals = [...(item.vals || [])]; for (let j = i; j < rows; j++) if (!done[j] && (j === i || f === 'kg')) vals[j] = { ...vals[j], [f]: v }; item.vals = vals; await saveSession(s); }   // el peso se arrastra a las series siguientes
     }

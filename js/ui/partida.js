@@ -31,7 +31,7 @@ export function view() {
       <label class="field"><span>Tiempo entrenando<small>Si empiezas ahora, pon 0</small></span><input data-f="years" inputmode="decimal" value="${esc(draft.years)}" placeholder="0"><u>años</u></label>
     </div>
     <button class="cta" data-act="next">Seguir <i>elegir plan</i></button>
-    <div class="linkrow"><label class="link" style="display:inline-flex;align-items:center">¿Ya la usabas? Restaurar una copia<input type="file" accept=".json,application/json" hidden data-restore></label></div>`;
+    <div class="linkrow"><label class="link" style="display:inline-flex;align-items:center">¿Ya la usabas? Restaurar una copia<input type="file" accept=".json,application/json" hidden data-restore></label><button class="link" data-act="cloud">Recuperar desde mi hoja de Google</button></div>`;
   else if (draft.step === 1) body = `
     <h1 class="big">Elige<br><em>tu plan</em></h1>
     <p class="lede">Puedes marcar varios y combinarlos: cada día eliges cuál toca. Luego cambias lo que quieras.</p>
@@ -58,6 +58,7 @@ export function view() {
       });
     },
     actions: {
+      async cloud() { const { recoverFromSheet } = await import('./recuperar.js'); if ((await recoverFromSheet()) != null) go('#/hoy'); },
       next() { keep(root()); if (draft.step === 0 && !draft.name.trim()) return toast('Pon tu nombre'); draft.step++; refresh(); },
       prev() { keep(root()); draft.step--; refresh(); },
       tpl(el) { const id = el.dataset.id, has = draft.templates.includes(id); draft.templates = has ? draft.templates.filter(x => x !== id) : [...draft.templates, id]; if (!draft.templates.length) draft.templates = [id]; refresh(); },

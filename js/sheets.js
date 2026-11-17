@@ -7,7 +7,8 @@
 // Dos maneras de enviarla, con el mismo contenido:
 //   · 'script': la persona pega en su hoja un pequeño Apps Script y nos da su enlace. No hace falta nada más.
 //   · 'google': botón «Conectar con Google». Necesita un identificador de cliente en js/config.js.
-// Es una copia para leer. Restaurar se hace con el archivo completo (backup.js): la hoja no lleva planes ni ajustes.
+// Las cinco pestañas son para leer. Además va una sexta, «Copia», con la app entera (planes, ajustes y series)
+// comprimida en texto: con ella se recupera todo en un móvil nuevo sin haber guardado ningún archivo.
 import { S, setting, saveSetting } from './state.js';
 import { epley, weekDates, parseYmd } from './logic.js';
 import { GOOGLE_CLIENT_ID } from './config.js';
@@ -80,10 +81,44 @@ export function build({ sets, ex, sessions = [], body = [], profile = {}, baseli
 export const fromState = () => build({ sets: S.sets, ex: S.ex, sessions: S.sessions, body: S.body, profile: setting('profile', {}), baseline: setting('baseline', []) });
 const seriesCount = t => t.tabs.find(x => x.name === 'Series').rows.length - 1;
 
+// ---------- copia completa dentro de la hoja ----------
+// La copia de la app (la misma de backup.js) va comprimida y en base64, troceada en celdas de la columna A:
+// una celda de Google admite 50.000 caracteres. Base64 no lleva comillas ni saltos, así que copiar y pegar la columna no la rompe.
+const MARK = 'gymcopia1', CHUNK = 40000;
+const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const pipe = async (bytes, through) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(through)).arrayBuffer());
+export async function packCopy(dump) {
+  let bytes = new TextEncoder().encode(JSON.stringify(dump)), how = 'raw';
+  if (globalThis.CompressionStream) try { bytes = await pipe(bytes, new CompressionStream('gzip')); how = 'gz'; } catch { /* sin comprimir */ }
+  const text = b64(bytes), rows = [['Copia completa de la app. No la toques: sirve para recuperar tus datos en otro móvil.'], [`${MARK}:${how}`]];
+  for (let i = 0; i < text.length; i += CHUNK) rows.push([text.slice(i, i + CHUNK)]);
+  return { name: 'Copia', rows, note: [1] };
+}
+// Acepta la columna entera tal como sale de la hoja (con su aviso y saltos de línea).
+export async function unpackCopy(text) {
+  text = String(text ?? '');
+  const m = /gymcopia1:(gz|raw)/.exec(text); if (!m) throw new Error('Ahí no hay ninguna copia de la app');
+  try {
+    let bytes = Uint8Array.from(atob(text.slice(m.index + m[0].length).replace(/[^A-Za-z0-9+/=]/g, '')), c => c.charCodeAt(0));
+    if (m[1] === 'gz') bytes = await pipe(bytes, new DecompressionStream('gzip'));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch { throw new Error('La copia está incompleta. Copia la columna A entera de la pestaña «Copia».'); }
+}
+const SCRIPT_URL = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+// Pide la copia a la hoja por su enlace. Solo contesta el código nuevo (el que lleva `copia` en doGet).
+export async function fetchCopy(url, fetchFn = fetch) {
+  if (!SCRIPT_URL.test(url)) throw new Error('Ese enlace no es de una hoja preparada. Tiene que acabar en /exec.');
+  const res = await fetchFn(url + '?copia=1', { redirect: 'follow' });
+  if (!res.ok) throw new Error('La hoja responde ' + res.status);
+  let out; try { out = await res.json(); } catch { throw new Error('La hoja no contesta como se esperaba.'); }
+  if (!out.copia) throw new Error(out.error || 'Esa hoja tiene el código antiguo. Abre la hoja, pestaña «Copia», copia la columna A entera y pégala aquí.');
+  return unpackCopy(out.copia);
+}
+
 // ---------- camino 1: Apps Script pegado en la hoja ----------
 // Se envía como texto plano para que el navegador no haga la consulta previa (CORS), que Apps Script no contesta.
 export async function pushScript(url, t, fetchFn = fetch) {
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)) throw new Error('Ese enlace no es de una hoja preparada. Tiene que acabar en /exec.');
+  if (!SCRIPT_URL.test(url)) throw new Error('Ese enlace no es de una hoja preparada. Tiene que acabar en /exec.');
   const res = await fetchFn(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ app: 'gimnasio', v: 2, ...t }), redirect: 'follow' });
   if (!res.ok) throw new Error('La hoja responde ' + res.status);
   let out; try { out = await res.json(); } catch { throw new Error('La hoja no contesta como se esperaba. Revisa que el acceso sea «Cualquier usuario».'); }
@@ -123,6 +158,8 @@ export async function pushGoogle(tok, t, sheetId, fetchFn = fetch) {
   // La hoja se crea ya con sus cinco pestañas y las cabeceras fijadas. sheetId = posición, para poder dar formato después.
   const create = async () => { const made = await call(API, { properties: { title: 'Gimnasio · mi progreso' }, sheets: t.tabs.map((x, i) => ({ properties: { sheetId: i, title: x.name, gridProperties: { frozenRowCount: x.name === 'Resumen' ? 0 : 1 } } })) }); if (!made) throw new Error('No se ha podido crear la hoja'); return made.spreadsheetId; };
   let id = sheetId || await create();
+  // Hoja creada antes de que existiera la pestaña «Copia»: se añade. Si ya está, Google contesta con error y no pasa nada.
+  if (sheetId && t.tabs.some(x => x.name === 'Copia')) try { await call(`${API}/${id}:batchUpdate`, { requests: [{ addSheet: { properties: { title: 'Copia' } } }] }); } catch { /* ya existe */ }
   if (!(await call(`${API}/${id}/values:batchClear`, { ranges: t.tabs.map(x => x.name) }))) id = await create();     // la borraron del Drive: se hace otra
   const out = await call(`${API}/${id}/values:batchUpdate`, { valueInputOption: 'RAW', data: t.tabs.map(x => ({ range: `${x.name}!A1`, values: x.rows })) });
   if (!out) throw new Error('No se ha podido escribir en la hoja');
@@ -140,9 +177,9 @@ export async function syncSheet({ ask = false, fetchFn = fetch } = {}) {
   const cfg = setting('sheet'); if (!cfg?.mode || busy) return { skipped: true };
   busy = true;
   try {
-    const t = fromState();
+    const t = fromState(); t.tabs.push(await packCopy(await S.db.dump()));
     const out = cfg.mode === 'script' ? await pushScript(cfg.url, t, fetchFn) : await pushGoogle(await googleToken({ ask }), t, cfg.sheetId, fetchFn);
-    await saveSetting('sheet', { ...setting('sheet'), pending: false, lastOk: Date.now(), lastError: null, rows: seriesCount(t), ...(out.url ? { open: out.url } : {}), ...(out.id ? { sheetId: out.id } : {}) });
+    await saveSetting('sheet', { ...setting('sheet'), pending: false, lastOk: Date.now(), lastError: null, copy: true, rows: seriesCount(t), ...(out.url ? { open: out.url } : {}), ...(out.id ? { sheetId: out.id } : {}) });
     return { ok: true };
   } catch (e) {
     const msg = e instanceof TypeError ? 'Sin conexión' : e.message;
@@ -173,7 +210,15 @@ function doPost(e) {
     return responder({ ok: false, error: String(err.message || err) });
   }
 }
-function doGet() { return responder({ ok: true, app: 'gimnasio' }); }
+// Con ?copia=1 devuelve la copia completa, para recuperar tus datos en un móvil nuevo.
+function doGet(e) {
+  if (e && e.parameter && e.parameter.copia) {
+    var h = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Copia');
+    if (!h || h.getLastRow() < 3) return responder({ ok: false, error: 'Esta hoja aún no tiene copia' });
+    return responder({ ok: true, copia: h.getRange(1, 1, h.getLastRow(), 1).getValues().map(function (r) { return r[0]; }).join('\\n') });
+  }
+  return responder({ ok: true, app: 'gimnasio' });
+}
 function montar(hoja, tab) {
   var filas = tab.rows, cols = filas[0].length;
   hoja.clear();

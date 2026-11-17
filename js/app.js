@@ -10,7 +10,7 @@ import { SKIN } from './skin.js';
 const ROUTES = {
   hoy: () => import('./ui/hoy.js'), sesion: () => import('./ui/sesion.js'), ej: () => import('./ui/ejercicio.js'), pasos: () => import('./ui/pasos.js'),
   cardio: () => import('./ui/cardio.js'), fin: () => import('./ui/fin.js'), rutina: () => import('./ui/rutina.js'), elegir: () => import('./ui/elegir.js'),
-  ficha: () => import('./ui/ficha.js'), progreso: () => import('./ui/progreso.js'), tu: () => import('./ui/tu.js'), partida: () => import('./ui/partida.js'), hoja: () => import('./ui/hoja.js'),
+  ficha: () => import('./ui/ficha.js'), progreso: () => import('./ui/progreso.js'), tu: () => import('./ui/tu.js'), partida: () => import('./ui/partida.js'), hoja: () => import('./ui/hoja.js'), historial: () => import('./ui/historial.js'),
 };
 const TABS = [['hoy', 'Hoy'], ['rutina', 'Rutina'], ['progreso', 'Progreso'], ['tu', 'Tú']];
 const root = document.getElementById('app');
@@ -49,7 +49,7 @@ bar.innerHTML = '<div><span class="d"></span><p></p><button data-r="add">+30 s</
 document.body.append(bar);
 bar.addEventListener('click', e => { const r = e.target.closest('[data-r]')?.dataset.r; if (r === 'add') addRest(30); if (r === 'skip') skipRest(); });
 onRest(r => {
-  bar.hidden = !r; document.body.classList.toggle('resting', !!r); if (!r) return;
+  bar.hidden = !r; document.body.classList.toggle('resting', !!r); document.body.classList.toggle('restover', !!r?.over); if (!r) return;
   bar.classList.toggle('over', r.over);
   bar.querySelector('.d').textContent = fmtClock(Math.max(r.left, 0));
   bar.querySelector('p').innerHTML = r.over ? 'A por la siguiente' : `Descanso de ${fmtClock(r.total)}${r.label ? `<br>${esc(r.label)}` : ''}`;

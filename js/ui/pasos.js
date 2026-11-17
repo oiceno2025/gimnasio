@@ -3,7 +3,7 @@ import { S, openSession, saveSession, planFor } from '../state.js';
 import { WARMUP, COOLDOWN, NECK_ROUTINE } from '../data/routines.js';
 import { fmtClock, fmtKg, roundTo } from '../logic.js';
 import { beep, unlockSound, keepAwake } from '../timer.js';
-import { esc, $, go, top, back } from './kit.js';
+import { esc, $, go, top, back, fit } from './kit.js';
 import { refresh } from '../nav.js';
 
 const run = { key: null, i: 0, side: 1, endsAt: null, left: null };   // `left` (ms) cuando está en pausa
@@ -35,7 +35,7 @@ export function view(kind = 'warm') {
 
   const html = top(back(home, kind === 'neck' ? 'Hoy' : 'Sesión'), `${name} · ${run.i + 1} de ${steps.length}`) + `
     <div class="mins" aria-hidden="true">${steps.map((_, k) => `<i class="${k < run.i ? 'on' : k === run.i ? 'now' : ''}"></i>`).join('')}</div>
-    <div class="stage glow demo"><canvas aria-label="Muñeco haciendo ${esc(step.name)}"></canvas><h3>${esc(step.name)}</h3>
+    <div class="stage glow demo"><canvas aria-label="Muñeco haciendo ${esc(step.name)}"></canvas><h3 ${fit(step.name, 160)}>${esc(step.name)}</h3>
       <div class="views"><button data-act="yaw" data-yaw="0">Frente</button><button data-act="yaw" data-yaw="1.5708">Lado</button><button data-act="yaw" data-yaw="3.1416">Detrás</button></div></div>
     <p class="lede">${esc(step.cue)}</p>
     ${step.ramp ? `<ul class="rows">${step.ramp.map((r, k) => `<li><p>Serie ${k + 1}</p><b>${r}</b></li>`).join('')}</ul><button class="cta" data-act="next">Hecho <i>a entrenar</i></button>` : `

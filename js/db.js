@@ -48,7 +48,7 @@ export async function openDB({ idb = globalThis.indexedDB, name = DB_NAME, migra
     },
     async fixSet(oldId, patch) {
       const old = await wrap(store('sets').get(oldId)); if (!old) throw new Error('No existe la serie');
-      return api.addSet({ ...old, ...patch, id: uid(), at: Date.now(), supersedes: oldId });
+      return api.addSet({ ...old, ...patch, id: uid(), at: patch.at ?? Date.now(), supersedes: oldId });       // `at` propio solo al corregir sesiones pasadas
     },
     async voidSet(oldId) { return api.fixSet(oldId, { void: true }); },
     rawSets: () => all('sets'),

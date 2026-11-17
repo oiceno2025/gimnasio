@@ -1,5 +1,5 @@
 // Hoy: qué toca, la semana en anillos y el botón de empezar.
-import { S, routineFor, plans, activePlans, plansOn, weekPlan, togglePlan, setDayPlan, withSwaps, swapToday, replaceInPlan, cardioMin, openSession, sessionOn, startSession, setsOf, planFor, setting } from '../state.js';
+import { S, routineFor, plans, activePlans, plansOn, weekPlan, togglePlan, setDayPlan, withSwaps, swapToday, replaceInPlan, cardioMin, lastCopy, openSession, sessionOn, startSession, setsOf, planFor, setting } from '../state.js';
 import { ymd, dow, weekDates, dayOf, itemsFor, planWeek, estimateMinutes, DAY_NAMES, DAY_LETTERS, niceDate, fmtKg } from '../logic.js';
 import { esc, $, go, top, title2, sheet, pickRows, ringSvg, toast } from './kit.js';
 import { refresh } from '../nav.js';
@@ -9,7 +9,7 @@ export const hotOf = items => {                     // los músculos que más tr
   return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
 };
 export const itemLine = i => (i.secs >= 300 ? `${i.sets > 1 ? i.sets + '×' : ''}${Math.round(i.secs / 60)} min` : i.secs ? `${i.sets}×${i.secs} s` : `${i.sets}×${i.repsMin}${i.repsMax > i.repsMin ? '–' + i.repsMax : ''}`);
-export const kgText = (kg, ex) => (kg > 0 ? `${fmtKg(kg)} kg` : ex?.equip === 'cuerpo' || ex?.kind === 'core' ? '' : '—');
+export const kgText = (kg, ex) => (kg > 0 ? `${fmtKg(kg)} kg` : ex?.equip === 'cuerpo' || ex?.kind === 'core' ? '' : '<i class="tbd">por medir</i>');
 
 let man = null;
 
@@ -30,7 +30,7 @@ export function view() {
 
   const head = top(`${DAY_NAMES[today]} ${niceDate(ymd())}`, `<button data-act="plan" aria-label="Elegir planes"><b>${active.length > 1 ? `${active.length} planes` : esc(routine.name)}</b>&nbsp;▾</button>`);
   const banners = [];
-  const lastOk = setting('lastShare') || 0;
+  const lastOk = lastCopy();
   if (S.sets.length && (!lastOk || Date.now() - lastOk > 7 * 864e5)) banners.push(`<div class="banner"><span>${lastOk ? `Llevas ${Math.floor((Date.now() - lastOk) / 864e5)} días sin copia fuera del móvil.` : 'Aún no tienes ninguna copia fuera del móvil.'}</span><button data-act="goto" data-to="#/tu">Guardar</button></div>`);
 
   let body;

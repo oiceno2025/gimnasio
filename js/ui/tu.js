@@ -8,7 +8,7 @@ import { VERSION } from '../version.js';
 const ago = t => { if (!t) return 'nunca'; const d = Math.floor((Date.now() - t) / 864e5); return d === 0 ? 'hoy' : d === 1 ? 'ayer' : `hace ${d} días`; };
 
 export function view() {
-  const p = setting('profile'), sheet = setting('sheet', {}), rest = { ...REST_DEFAULT, ...setting('rest', {}) }, lastShare = setting('lastShare');
+  const p = setting('profile'), gs = setting('sheet', {}), rest = { ...REST_DEFAULT, ...setting('rest', {}) }, lastShare = setting('lastShare');
   const html = top('Tú', `Versión ${VERSION}`) + `
     <h1 class="big">${esc(p?.name || 'Tú')}</h1>
     <p class="lede">${S.sets.length} series y ${S.sessions.filter(s => s.endedAt).length} sesiones guardadas en este móvil.</p>
@@ -17,8 +17,9 @@ export function view() {
     <p class="note" style="padding-top:0">Si borras el icono de la app, el iPhone borra sus datos. Por eso las copias van fuera del móvil.</p>
     <div class="rows">
       <button data-act="share" class="chev"><p>Guardar copia en iCloud<small>Última: ${ago(lastShare)}. Elige «Guardar en Archivos»</small></p></button>
-      <a href="#/hoja" class="chev"><p>Hoja de Google con tu progreso<small>${sheet.mode ? (sheet.pending ? 'Pendiente de enviar' : `Conectada. Último envío: ${ago(sheet.lastOk)}`) : 'Ejercicio, kilos y repeticiones en tu Drive'}</small></p></a>
+      <a href="#/hoja" class="chev"><p>Hoja de Google con tu progreso<small>${gs.mode ? (gs.pending ? 'Pendiente de enviar' : `Conectada. Copia automática: ${ago(gs.lastOk)}`) : 'Tu progreso y una copia automática en tu Drive'}</small></p></a>
       <label class="chev" style="cursor:pointer"><p>Restaurar una copia<small>Añade lo que falte. No pisa lo que ya hay</small></p><input type="file" accept=".json,application/json" hidden id="restore"></label>
+      <button data-act="cloud" class="chev"><p>Recuperar desde tu hoja de Google<small>Con el enlace de la hoja o pegando su pestaña «Copia»</small></p></button>
       <button data-act="csv" class="chev"><p>Exportar hoja de cálculo<small>Todas tus series en un archivo CSV</small></p></button>
     </div>
     <p class="note">${S.persisted ? 'El móvil ha confirmado que no borrará estos datos por falta de espacio.' : 'Instala la app en la pantalla de inicio para que el iPhone proteja mejor sus datos.'}</p>
@@ -50,6 +51,7 @@ export function view() {
     },
     actions: {
       async share() { const { shareCopy } = await import('../backup.js'); const how = await shareCopy(); if (how) { toast(how === 'share' ? 'Copia compartida' : 'Copia descargada'); refresh(); } },
+      async cloud() { const { recoverFromSheet } = await import('./recuperar.js'); if ((await recoverFromSheet()) != null) refresh(); },
       async csv() { const { toCSV, download } = await import('../backup.js'); download(`gimnasio-series-${new Date().toISOString().slice(0, 10)}.csv`, toCSV(S.sets, S.ex, S.sessions), 'text/csv'); },
       async rest(el) { const k = el.dataset.k, v = Math.min(300, Math.max(15, rest[k] + +el.dataset.d)); await saveSetting('rest', { ...setting('rest', {}), [k]: v }); refresh(); },
       async update() {

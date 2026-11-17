@@ -7,6 +7,8 @@ export const go = hash => { if (location.hash === hash) dispatchEvent(new HashCh
 
 export const top = (left, right = '') => `<div class="top"><span>${left}</span><span>${right}</span></div>`;
 export const back = (href, label) => `<a href="${href}">‹ ${esc(label)}</a>`;
+// Tamaño de un título en Anton para que su palabra más larga quepa en `w` px (cada letra ocupa unos 0,47 em).
+export const fit = (name, w = 150, max = 36, min = 17) => `style="font-size:${Math.max(min, Math.min(max, Math.floor(w / (Math.max(...String(name).split(/[\s-]+/).map(x => x.length), 1) * .47))))}px"`;
 export const title2 = t => (t || []).map((l, i) => (i ? `<em>${esc(l)}</em>` : esc(l))).join('<br>');
 
 let toastTimer;

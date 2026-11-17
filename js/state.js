@@ -93,6 +93,9 @@ export function planFor(item, session) {
 // Minutos de cardio en unas fechas: el bloque de cardio de la sesión más los ejercicios de cardio apuntados.
 export const cardioMin = dates => S.sessions.filter(s => dates.includes(s.date)).reduce((t, s) => t + (s.cardio?.minutes || 0), 0) + S.sets.filter(s => s.unit === 'min' && dates.includes(s.date)).reduce((t, s) => t + s.reps, 0);
 
+// Última copia fuera del móvil que sirve para restaurar: el archivo de iCloud o la pestaña «Copia» de la hoja.
+export const lastCopy = () => Math.max(setting('lastShare') || 0, (setting('sheet')?.copy && setting('sheet').lastOk) || 0);
+
 // ---------- cuerpo ----------
 export const bodyKg = () => S.body.at(-1)?.kg ?? setting('profile')?.kg ?? null;
 export async function addBody(kg, date = ymd()) {

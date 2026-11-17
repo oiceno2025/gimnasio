@@ -20,10 +20,12 @@ export function view() {
       ${cfg.pending ? `<div class="banner"><span>Pendiente de enviar${cfg.lastError ? ': ' + esc(cfg.lastError) : ''}.</span></div>` : ''}
       <button class="cta" data-act="send">Enviar ahora <i>${S.sets.length} series</i></button>
       <div class="linkrow">${cfg.open ? `<a class="link" href="${esc(cfg.open)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center">Abrir mi hoja</a>` : ''}<button class="link" data-act="off">Desconectar</button></div>
-      <p class="note">Se envía sola al acabar cada sesión. La app monta la hoja entera: Resumen (de dónde partes y cuánto has cambiado), Progreso, Semanas, Cuerpo y Series. No escribas en ella: se sobrescribe.</p>` : '';
+      <p class="note">Se envía sola al acabar cada sesión. La app monta la hoja entera: Resumen (de dónde partes y cuánto has cambiado), Progreso, Semanas, Cuerpo y Series. No escribas en ella: se sobrescribe.</p>
+      <p class="note">${cfg.copy ? 'La pestaña «Copia» guarda la app entera. Para recuperarla en otro móvil: Tú → Recuperar desde tu hoja de Google.' : 'En el próximo envío se añade la pestaña «Copia», con la app entera.'}${cfg.mode === 'script' ? ' Si preparaste la hoja antes de la versión 1.3, vuelve a pegar el código y publica una versión nueva: así se recupera solo con el enlace.' : ''}</p>
+      ${cfg.mode === 'script' ? '<div class="linkrow"><button class="link" data-act="copy">Copiar código</button></div>' : ''}` : '';
   const html = top(back('#/tu', 'Tú'), 'Hoja de Google') + `
     <h1 class="big">Tu progreso<br><em>en una hoja</em></h1>
-    <p class="lede">Tu entreno en tu Google Drive: de dónde partes, lo que levantas, cuánto has mejorado en porcentaje y cada serie apuntada. Es para leer y compartir; para recuperar la app sigue valiendo la copia completa.</p>
+    <p class="lede">Tu entreno en tu Google Drive: de dónde partes, lo que levantas, cuánto has mejorado en porcentaje y cada serie apuntada. Lleva además una copia completa de la app: si cambias de móvil, lo recuperas todo desde aquí.</p>
     ${status}
     ${on ? '' : `
     ${googleReady() ? `<h2 class="h">Lo más rápido</h2><button class="cta" data-act="google">Conectar con Google <i>crea la hoja sola</i></button>

@@ -26,7 +26,7 @@ function loop() {
   interval = setInterval(() => {
     if (!state) { if (!subs.size) { clearInterval(interval); interval = null; } return; }
     const left = state.endsAt - Date.now();
-    if (left <= 0 && !state.rung) { state.rung = true; save(); beep(3); }
+    if (left <= 0 && !state.rung) { state.rung = true; save(); beep(3); try { navigator.vibrate?.([200, 100, 200]); } catch { /* el iPhone no vibra desde una web */ } }
     if (left < -20000) { state = null; save(); }        // 20 s después de acabar, se quita solo
     emit();
   }, 250);
